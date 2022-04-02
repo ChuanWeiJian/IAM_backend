@@ -1,0 +1,7 @@
+{
+  "env": {
+    "DB_USER": "weijian",
+    "DB_PASSWORD": "QNJhAjRoBnY4DJeK",
+    "DB_NAME": "mock_IAM"
+  }
+}
