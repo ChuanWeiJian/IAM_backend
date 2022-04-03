@@ -3,9 +3,15 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const HttpError = require("./models/http-error");
 
+const schoolRoutes = require("./routes/schools-routes");
+const examCenterRoutes = require("./routes/exam-centers-routes");
+
 const app = express();
 
 app.use(bodyParser.json());
+
+app.use("/api/schools", schoolRoutes);
+app.use("/api/examcenters", examCenterRoutes);
 
 app.use((req, res, next) => {
   return next(new HttpError("Could not find this route", 404));
