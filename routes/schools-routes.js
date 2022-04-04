@@ -12,7 +12,10 @@ router.get("/:district", controller.getAllSchools);
 router.get("/:id/:district", controller.getSchoolByIdAndDistrict);
 
 //get school by id & district: /api/schools/examcenters/:id/:district
-router.get("/examcenters/:id/:district", controller.getSchoolByIdAndDistrictWithResolvedExamCenters);
+router.get(
+  "/examcenters/:id/:district",
+  controller.getSchoolByIdAndDistrictWithResolvedExamCenters
+);
 
 //register new school route : /api/schools/
 router.post(
@@ -27,6 +30,20 @@ router.post(
     check("district").not().isEmpty().withMessage("District field is missing"),
   ],
   controller.registerSchool
+);
+
+//edit school information: /api/schools/:id
+router.patch(
+  "/:id",
+  [
+    check("name").not().isEmpty().withMessage("Name field is required"),
+    check("schoolCode")
+      .not()
+      .isEmpty()
+      .withMessage("School Code field is required"),
+    check("address").not().isEmpty().withMessage("Address field is required"),
+  ],
+  controller.editSchoolInformation
 );
 
 module.exports = router;

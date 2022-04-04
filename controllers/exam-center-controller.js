@@ -188,6 +188,46 @@ class ExamCenterController {
     res.json({ examCenter: examCenter.toObject({ getters: true }) });
     //return the found exam center
   };
+
+  editExamCenterInformation = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log(errors);
+      return next(new HttpError(errors.errors[0].msg, 422));
+    }
+
+    const { examCenterCode, safeRoomNo } = req.body;
+    const examCenterId = req.params.id;
+
+    let examCenter;
+    try {
+      //get the exam center by id
+      examCenter = await ExamCenter.findById(examCenterId);
+
+      if (!examCenter) {
+        return next(
+          new HttpError("Could not find any exam center with provided id", 404)
+        );
+      }
+
+      //edit exam center information
+      examCenter.examCenterCode = examCenterCode;
+      examCenter.safeRoomNo = safeRoomNo;
+      await examCenter.save();
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(
+          `Failed to edit exam center information - ${error.message}`,
+          500
+        )
+      );
+    }
+
+    return res
+      .status(200)
+      .json({ examCenter: examCenter.toObject({ getters: true }) });
+  };
 }
 
 module.exports = new ExamCenterController();

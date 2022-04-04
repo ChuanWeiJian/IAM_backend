@@ -158,6 +158,45 @@ class SchoolController {
 
     return res.json({ school: school.toObject({ getters: true }) });
   };
+
+  editSchoolInformation = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log(errors);
+      return next(new HttpError(errors.errors[0].msg, 422));
+    }
+
+    const { name, schoolCode, address } = req.body;
+    const schoolId = req.params.id;
+
+    let school;
+    try {
+      //retrieve the school information by id
+      school = await School.findById(schoolId);
+
+      if (!school) {
+        return next(
+          new HttpError("Could not find any school with provided id", 404)
+        );
+      }
+      
+      //update school information
+      school.name = name;
+      school.schoolCode = schoolCode;
+      school.address = address;
+      await school.save();
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(
+          `Failed to edit school information - ${error.message}`,
+          500
+        )
+      );
+    }
+
+    return res.status(200).json({ school: school.toObject({ getters: true }) });
+  };
 }
 
 module.exports = new SchoolController();

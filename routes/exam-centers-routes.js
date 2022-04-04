@@ -15,7 +15,10 @@ router.get("/school/:district", controller.getAllExamCentersResolvedSchool);
 router.get("/:id/:district", controller.getExamCenterByIdAndDistrict);
 
 //get exam center by id & district with all fields resolved : /api/examcenters/resolve/:id/:district
-router.get("/resolve/:id/:district", controller.getExamCenterByIdAndDistrictResolvedAll);
+router.get(
+  "/resolve/:id/:district",
+  controller.getExamCenterByIdAndDistrictResolvedAll
+);
 
 //register new exam center: /api/examcenters
 router.post(
@@ -33,6 +36,22 @@ router.post(
     check("district").not().isEmpty().withMessage("District field is missing"),
   ],
   controller.registerExamCenter
+);
+
+//edit exam center information: /api/examcenters/:id
+router.patch(
+  "/:id",
+  [
+    check("examCenterCode")
+      .not()
+      .isEmpty()
+      .withMessage("Exam Center Code field is required"),
+    check("safeRoomNo")
+      .not()
+      .isEmpty()
+      .withMessage("Safe Room Numeber field is required"),
+  ],
+  controller.editExamCenterInformation
 );
 
 module.exports = router;
