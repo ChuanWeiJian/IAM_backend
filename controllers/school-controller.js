@@ -17,12 +17,13 @@ class SchoolController {
       return next(new HttpError(errors.errors[0].msg, 422));
     }
 
-    const { name, schoolCode, address } = req.body;
+    const { name, schoolCode, address, district } = req.body;
 
     const newSchool = new School({
       name: name,
       schoolCode: schoolCode,
       address: address,
+      district: district,
     });
 
     let newExamSecretary, password;
@@ -58,12 +59,104 @@ class SchoolController {
       //end transaction
     } catch (error) {
       console.log(error);
-      return next(new HttpError(`Failed to register new school - ${error.message}`, 500));
+      return next(
+        new HttpError(`Failed to register new school - ${error.message}`, 500)
+      );
     }
 
     res
       .status(201)
       .json({ username: newExamSecretary.username, password: password });
+  };
+
+  getAllSchools = async (req, res, next) => {
+    const district = req.params.district;
+
+    let schools;
+    try {
+      //get all schools by district
+      schools = await School.find({ district: district });
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(`Failed to retrieve all schools - ${error.message}`, 500)
+      );
+    }
+
+    //if no school found, return an empty array
+    if (!schools) {
+      res.json({ schools: [] });
+    }
+
+    //return all schools found
+    return res.json({
+      schools: schools.map((school) => school.toObject({ getters: true })),
+    });
+  };
+
+  getSchoolByIdAndDistrict = async (req, res, next) => {
+    const schoolId = req.params.id;
+    const district = req.params.district;
+
+    let school;
+    try {
+      //get school by id & district
+      school = await School.findOne({ _id: schoolId, district: district });
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(
+          `Failed to retrieve school by id & district - ${error.message}`,
+          500
+        )
+      );
+    }
+
+    //school not found
+    if (!school) {
+      return next(
+        new HttpError(
+          "Could not find any school with provided id & district",
+          404
+        )
+      );
+    }
+
+    return res.json({ school: school.toObject({ getters: true }) });
+  };
+
+  getSchoolByIdAndDistrictWithResolvedExamCenters = async (req, res, next) => {
+    const schoolId = req.params.id;
+    const district = req.params.district;
+
+    let school;
+    try {
+      //get school by id & district with resolved exam centers
+      school = await School.findOne({
+        _id: schoolId,
+        district: district,
+      }).populate("examCenters");
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(
+          `Failed to retrieve school by id & district with resolved exam centers - ${error.message}`,
+          500
+        )
+      );
+    }
+
+    //school not found
+    if (!school) {
+      return next(
+        new HttpError(
+          "Could not find any school with provided id & district with resolved exam centers",
+          404
+        )
+      );
+    }
+
+    return res.json({ school: school.toObject({ getters: true }) });
   };
 }
 

@@ -7,6 +7,7 @@ const schoolSchema = new Schema({
   name: { type: String, required: true },
   schoolCode: { type: String, required: true, unique: true },
   address: { type: String, required: true },
+  district: { type: String, required: true },
   examCenters: [{ type: mongoose.Types.ObjectId, ref: "ExamCenter" }],
   examSecretary: { type: mongoose.Types.ObjectId, ref: "User" },
 });
