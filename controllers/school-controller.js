@@ -179,7 +179,7 @@ class SchoolController {
           new HttpError("Could not find any school with provided id", 404)
         );
       }
-      
+
       //update school information
       school.name = name;
       school.schoolCode = schoolCode;

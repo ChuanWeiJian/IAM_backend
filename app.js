@@ -5,6 +5,7 @@ const HttpError = require("./models/http-error");
 
 const schoolRoutes = require("./routes/schools-routes");
 const examCenterRoutes = require("./routes/exam-centers-routes");
+const assignmentTaskRoutes = require("./routes/assignment-tasks-routes");
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(bodyParser.json());
 
 app.use("/api/schools", schoolRoutes);
 app.use("/api/examcenters", examCenterRoutes);
+app.use("/api/assignments", assignmentTaskRoutes);
 
 app.use((req, res, next) => {
   return next(new HttpError("Could not find this route", 404));
