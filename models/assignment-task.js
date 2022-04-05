@@ -14,7 +14,7 @@ const assignmentTaskSchema = new Schema({
   examCenterData: [
     { type: mongoose.Types.ObjectId, ref: "ExamCenterData", default: [] },
   ],
-  /*collectionStatus: [
+  collectionStatus: [
     {
       examCenter: {
         type: mongoose.Types.ObjectId,
@@ -23,8 +23,7 @@ const assignmentTaskSchema = new Schema({
       },
       status: { type: Number, required: true },
     },
-  ],*/
-  collectionStatus: { type: Map, of: Number, required: true },
+  ],
   chiefInvigilatorComplete: { type: Boolean, required: true, default: false },
   viceChiefInvigilatorComplete: {
     type: Boolean,
@@ -46,6 +45,8 @@ const assignmentTaskSchema = new Schema({
   assignmentResults: [
     { type: mongoose.Types.ObjectId, ref: "AssignmentResult", default: [] },
   ],
+  status: { type: String, required: true, default: "Collection in progress" },
+  district: { type: String, required: true },
 });
 
 module.exports = mongoose.model("AssignmentTask", assignmentTaskSchema);

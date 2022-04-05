@@ -5,6 +5,15 @@ const controller = require("../controllers/assignment-task-controller");
 
 const router = express.Router();
 
+//get all assignment tasks by district: /api/assignments/:district
+router.get("/:district", controller.getAllAssignmentTasks);
+
+//get one assignment task by id and district: /api/assignments/:id/:district
+router.get("/:id/:district", controller.getAssignmentTaskByIdAndDistrict);
+
+//get one assignment task by id and district with resolved exam center & exam center data: /api/assignments/resolve/:id/:district
+router.get("/resolve/:id/:district", controller.getAssignmentTaskByIdAndDistrictResolvedAll);
+
 //create new assignment task: /api/assignments
 router.post(
   "/",
@@ -27,6 +36,10 @@ router.post(
       .withMessage(
         "Exam Centers is empty, must contain at least one exam center"
       ),
+    check("district")
+      .not()
+      .isEmpty()
+      .withMessage("District information is missing"),
   ],
   controller.createNewAssignmentTask
 );
