@@ -109,6 +109,7 @@ class LetterTemplateController {
     const { title, content, tags } = req.body;
     let letterTemplate;
     try {
+      //get the letter template by id
       letterTemplate = await LetterTemplate.findById(templateId);
 
       if (!letterTemplate) {
@@ -120,9 +121,11 @@ class LetterTemplateController {
         );
       }
 
+      //edit letter template
       letterTemplate.title = title;
       letterTemplate.content = content;
       letterTemplate.tags = tags;
+      //save modified letter template
       await letterTemplate.save();
     } catch (error) {
       console.log(error);
@@ -134,6 +137,38 @@ class LetterTemplateController {
     res
       .status(200)
       .json({ letterTemplate: letterTemplate.toObject({ getters: true }) });
+  };
+
+  deleteLetterTemplate = async (req, res, next) => {
+    const templateId = req.params.id;
+
+    let letterTemplate;
+    try {
+      //get the letter template by id
+      letterTemplate = await LetterTemplate.findById(templateId);
+
+      if (!letterTemplate) {
+        return next(
+          new HttpError(
+            "Could not find any letter template with the provided id",
+            404
+          )
+        );
+      }
+
+      //delete the letter template
+      await letterTemplate.remove();
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(
+          `Failed to delete letter template - ${error.message}`,
+          500
+        )
+      );
+    }
+
+    res.status(200).json({ message: "Success" });
   };
 }
 

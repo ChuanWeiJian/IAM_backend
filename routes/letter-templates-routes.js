@@ -34,4 +34,7 @@ router.patch(
   controller.editLetterTemplate
 );
 
+//delete letter template: /api/letters/:id
+router.delete("/:id", controller.deleteLetterTemplate);
+
 module.exports = router;
