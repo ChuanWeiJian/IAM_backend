@@ -43,14 +43,15 @@ class SchoolController {
         numbers: true,
       });
       //hashing the password
-      const hashPassword = await bcrypt.hash(password, 12);
+      const hashPassword = await bcrypt.hash(password, 10);
       //generate username
-      const username = "sec" + schoolCode;
+      const login = "sec" + schoolCode;
       newExamSecretary = new User({
-        username: username,
+        login: login,
         password: hashPassword,
         userGroup: "Exam Secretary",
         school: school,
+        district: district,
       });
       await newExamSecretary.save({ session: session });
       newSchool.examSecretary = newExamSecretary.id;
@@ -66,7 +67,7 @@ class SchoolController {
 
     res
       .status(201)
-      .json({ username: newExamSecretary.username, password: password });
+      .json({ login: newExamSecretary.login, password: password });
   };
 
   getAllSchools = async (req, res, next) => {

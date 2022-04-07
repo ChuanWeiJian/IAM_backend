@@ -12,7 +12,10 @@ router.get("/:district", controller.getAllAssignmentTasks);
 router.get("/:id/:district", controller.getAssignmentTaskByIdAndDistrict);
 
 //get one assignment task by id and district with resolved exam center & exam center data: /api/assignments/resolve/:id/:district
-router.get("/resolve/:id/:district", controller.getAssignmentTaskByIdAndDistrictResolvedAll);
+router.get(
+  "/resolve/:id/:district",
+  controller.getAssignmentTaskByIdAndDistrictResolvedAll
+);
 
 //create new assignment task: /api/assignments
 router.post(
@@ -27,10 +30,6 @@ router.post(
       .not()
       .isEmpty()
       .withMessage("Collection Date field is required"),
-    check("assignmentDate")
-      .not()
-      .isEmpty()
-      .withMessage("Assignment Date field is required"),
     check("examCenters")
       .isArray({ min: 1 })
       .withMessage(
@@ -42,6 +41,28 @@ router.post(
       .withMessage("District information is missing"),
   ],
   controller.createNewAssignmentTask
+);
+
+//edit assignment task by id: /api/assignments/:id
+router.patch(
+  "/:id",
+  [
+    check("title").not().isEmpty().withMessage("Title field is required"),
+    check("examType")
+      .not()
+      .isEmpty()
+      .withMessage("Exam Type field is required"),
+    check("collectionDate")
+      .not()
+      .isEmpty()
+      .withMessage("Collection Date field is required"),
+    check("examCenters")
+      .isArray({ min: 1 })
+      .withMessage(
+        "Exam Centers is empty, must contain at least one exam center"
+      )
+  ],
+  controller.editAssignmentTask
 );
 
 module.exports = router;

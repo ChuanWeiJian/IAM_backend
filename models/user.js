@@ -4,10 +4,12 @@ const uniqueValidator = require("mongoose-unique-validator");
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
-  username: { type: String, required: true, unique: true },
+  login: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   userGroup: { type: String, required: true },
+  status: {type: Number, required: true, default: 1},
   school: { type: mongoose.Types.ObjectId, required: true, ref: "School" },
+  district: {type: String, required: true}
 });
 
 userSchema.plugin(uniqueValidator);

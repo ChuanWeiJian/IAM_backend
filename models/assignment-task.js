@@ -7,7 +7,6 @@ const assignmentTaskSchema = new Schema({
   examType: { type: String, required: true },
   createdDate: { type: Date, required: true },
   collectionDate: { type: Date, required: true },
-  assignmentDate: { type: Date, required: true },
   examCenters: [
     { type: mongoose.Types.ObjectId, required: true, ref: "ExamCenter" },
   ],
@@ -21,7 +20,7 @@ const assignmentTaskSchema = new Schema({
         required: true,
         ref: "ExamCenter",
       },
-      status: { type: Number, required: true },
+      status: { type: String, required: true },
     },
   ],
   chiefInvigilatorComplete: { type: Boolean, required: true, default: false },

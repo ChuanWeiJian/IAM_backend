@@ -1,11 +1,14 @@
 const { validationResult } = require("express-validator");
 const mongoose = require("mongoose");
+const _ = require("lodash");
 
 const HttpError = require("../models/http-error");
 const AssignmentTask = require("../models/assignment-task");
 const ExamCenter = require("../models/exam-center");
 const School = require("../models/school");
 const ExamCenterData = require("../models/exam-center-data");
+const AssignmentResult = require("../models/assignment-result");
+const { assign } = require("lodash");
 
 class AssignmentTaskController {
   constructor() {}
@@ -17,19 +20,12 @@ class AssignmentTaskController {
       return next(new HttpError(errors.errors[0].msg, 422));
     }
 
-    const {
-      title,
-      examType,
-      collectionDate,
-      assignmentDate,
-      examCenters,
-      district,
-    } = req.body;
+    const { title, examType, collectionDate, examCenters, district } = req.body;
 
     //create collection status using array
     const collectionStatus = [];
     for (var center of examCenters) {
-      collectionStatus.push({ examCenter: center, status: 0 });
+      collectionStatus.push({ examCenter: center, status: "Incomplete" });
     }
 
     const newAssignmentTask = new AssignmentTask({
@@ -37,7 +33,6 @@ class AssignmentTaskController {
       examType: examType,
       createdDate: new Date(),
       collectionDate: new Date(collectionDate),
-      assignmentDate: new Date(assignmentDate),
       examCenters: examCenters,
       collectionStatus: collectionStatus,
       district: district,
@@ -68,7 +63,7 @@ class AssignmentTaskController {
       });
 
       //update all exam centers' assignment task at once
-      await ExamCenter.bulkWrite(bulkOperations);
+      await ExamCenter.bulkWrite(bulkOperations, { session: session });
       await session.commitTransaction();
       //end transaction
     } catch (error) {
@@ -95,8 +90,13 @@ class AssignmentTaskController {
       } else {
         status = "Collection in progress";
       }
-    } else if (current < assignmentTask.assignmentDate) {
+    } else {
       if (
+        assignmentTask.examCenters.length !==
+        assignmentTask.examCenterData.length
+      ) {
+        status = "Collection data incomplete";
+      } else if (
         assignmentTask.chiefInvigilatorComplete &&
         assignmentTask.viceChiefInvigilatorComplete &&
         assignmentTask.invigilatorComplete &&
@@ -108,8 +108,6 @@ class AssignmentTaskController {
       } else {
         status = "Assigning in progress";
       }
-    } else {
-      status = "Assignment Complete";
     }
 
     return status;
@@ -210,7 +208,10 @@ class AssignmentTaskController {
         district: district,
       }).populate({ path: "examCenters", populate: { path: "school" } });
 
-      if (assignmentTask.status !== "Collection in progress") {
+      if (
+        assignmentTask.status !== "Collection in progress" &&
+        assignmentTask.status !== "Collection data incomplete"
+      ) {
         await assignmentTask.populate("examCenterData").execPopulate();
       }
     } catch (error) {
@@ -228,6 +229,191 @@ class AssignmentTaskController {
         new HttpError(
           "Could not find any assignment task with provided id & district",
           404
+        )
+      );
+    }
+
+    res
+      .status(200)
+      .json({ assignmentTask: assignmentTask.toObject({ getters: true }) });
+  };
+
+  editAssignmentTask = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log(errors);
+      return next(new HttpError(errors.errors[0].msg, 422));
+    }
+
+    const { title, examType, collectionDate, examCenters } = req.body;
+    const taskId = req.params.id;
+
+    let assignmentTask;
+    try {
+      //retrieve the assignment task by id
+      assignmentTask = await AssignmentTask.findById(taskId)
+        .populate("examCenters")
+        .populate("examCenterData");
+
+      if (!assignmentTask) {
+        return next(
+          new HttpError(
+            "Could not find any assignment task with provided id",
+            404
+          )
+        );
+      }
+
+      let examCenterBulkOperation = []; //bulk operation array
+      let examCenterDataBulkOperation = []; //bulk operation array
+      let assignmentResultBulkOperation; //bulk operation array
+      let newCollectionStatus = assignmentTask.collectionStatus;
+      let newExamCenterData = assignmentTask.examCenterData;
+
+      assignmentTask.examCenters.forEach((center) => {
+        //find removed exam center
+        if (!examCenters.includes(center.id)) {
+          //removed the task id from exam center's assignmentTasks
+          const newAssignmentTaskList = center.assignmentTasks.filter(
+            (task) => task != taskId
+          );
+
+          examCenterBulkOperation.push({
+            updateOne: {
+              filter: {
+                _id: center._id,
+              },
+              update: {
+                assignmentTasks: newAssignmentTaskList,
+              },
+            },
+          });
+
+          //remove the collection status that belongs to the removed exam center
+          newCollectionStatus = newCollectionStatus.filter(
+            (status) => status.examCenter != center.id
+          );
+
+          //look for the exam center data that belongs to the removed exam center and remove it from the newExamCenterData array
+          const removedExamCenterData = _.remove(newExamCenterData, (data) => {
+            return data.examCenter == center.id;
+          });
+
+          //if exam center data exist, add bulk operation
+          if (removedExamCenterData.length !== 0) {
+            examCenterDataBulkOperation.push({
+              deleteOne: {
+                filter: {
+                  _id: removedExamCenterData[0]._id,
+                },
+              },
+            });
+          }
+        }
+      });
+
+      examCenters.forEach((center) => {
+        //find new added exam center
+        const existedExamCenter = assignmentTask.examCenters.find(
+          (examCenter) => examCenter.id == center
+        );
+
+        if (!existedExamCenter) {
+          //add the assignment task id into the new exam center's assignmentTasks
+          examCenterBulkOperation.push({
+            updateOne: {
+              filter: {
+                _id: center,
+              },
+              update: {
+                $push: { assignmentTasks: taskId },
+              },
+            },
+          });
+
+          //add new collection status for the new exam center
+          newCollectionStatus.push({
+            examCenter: center,
+            status: "Incomplete",
+          });
+        }
+      });
+
+      //update the assignment task information
+      assignmentTask.title = title;
+      assignmentTask.examType = examType;
+      assignmentTask.collectionDate = new Date(collectionDate);
+      assignmentTask.examCenters = examCenters;
+      assignmentTask.collectionStatus = newCollectionStatus;
+      assignmentTask.examCenterData = newExamCenterData.map((data) => data.id);
+      if (
+        assignmentTask.status === "Assigning in progress" ||
+        assignmentTask.status === "Assignment Complete"
+      ) {
+        //the original status is assigning in progress or assignment complete
+        //check if there is any modification of exam centers
+        if (examCenterBulkOperation) {
+          //reset all the assignment results
+          assignmentTask.chiefInvigilatorComplete = false;
+          assignmentTask.viceChiefInvigilatorComplete = false;
+          assignmentTask.environmentalSupervisorComplete = false;
+          assignmentTask.roomKeeperComplete = false;
+          assignmentTask.invigilatorComplete = false;
+          assignmentTask.reservedInvigilatorComplete = false;
+
+          assignmentResultBulkOperation = assignmentTask.assignmentResults.map(
+            (result) => {
+              return {
+                deleteOne: {
+                  filter: {
+                    _id: result._id,
+                  },
+                },
+              };
+            }
+          );
+
+          assignmentTask.assignmentResults = [];
+        }
+      }
+      //update new status of the assignment task
+      const newStatus = this.getStatus(assignmentTask);
+      if (newStatus !== assignmentTask.status) {
+        assignmentTask.status = newStatus;
+      }
+
+      //start transaction session
+      const session = await mongoose.startSession();
+      session.startTransaction();
+
+      //save the updated assignment task
+      await assignmentTask.save({ session: session });
+
+      if (examCenterBulkOperation.length !== 0) {
+        await ExamCenter.bulkWrite(examCenterBulkOperation, {
+          session: session,
+        });
+      }
+
+      if (examCenterDataBulkOperation.length !== 0) {
+        await ExamCenterData.bulkWrite(examCenterDataBulkOperation, {
+          session: session,
+        });
+      }
+
+      if (assignmentResultBulkOperation) {
+        await AssignmentResult.bulkWrite(assignmentResultBulkOperation, {
+          session: session,
+        });
+      }
+
+      await session.commitTransaction();
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(
+          `Failed to edit the assignment task - ${error.message}`,
+          500
         )
       );
     }
