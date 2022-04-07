@@ -23,4 +23,15 @@ router.post(
   controller.createLetterTemplate
 );
 
+//edit letter template: /api/letters/:id
+router.patch(
+  "/:id",
+  [
+    check("title").not().isEmpty().withMessage("Title field is required"),
+    check("content").not().isEmpty().withMessage("Content field is required"),
+    check("tags").isArray({ min: 1 }).withMessage("Tags cannot be empty"),
+  ],
+  controller.editLetterTemplate
+);
+
 module.exports = router;

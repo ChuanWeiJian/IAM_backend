@@ -102,6 +102,39 @@ class LetterTemplateController {
       .status(200)
       .json({ letterTemplate: letterTemplate.toObject({ getters: true }) });
   };
+
+  editLetterTemplate = async (req, res, next) => {
+    const templateId = req.params.id;
+
+    const { title, content, tags } = req.body;
+    let letterTemplate;
+    try {
+      letterTemplate = await LetterTemplate.findById(templateId);
+
+      if (!letterTemplate) {
+        return next(
+          new HttpError(
+            "Could not find any letter template with the provided id",
+            404
+          )
+        );
+      }
+
+      letterTemplate.title = title;
+      letterTemplate.content = content;
+      letterTemplate.tags = tags;
+      await letterTemplate.save();
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(`Failed to edit letter template - ${error.message}`, 500)
+      );
+    }
+
+    res
+      .status(200)
+      .json({ letterTemplate: letterTemplate.toObject({ getters: true }) });
+  };
 }
 
 module.exports = new LetterTemplateController();
