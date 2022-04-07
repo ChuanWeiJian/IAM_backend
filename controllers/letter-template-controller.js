@@ -39,6 +39,69 @@ class LetterTemplateController {
       .status(201)
       .json({ letterTemplate: letterTemplate.toObject({ getters: true }) });
   };
+
+  getAllLetterTemplates = async (req, res, next) => {
+    const district = req.params.district;
+
+    let letterTemplates;
+    try {
+      //get all letter templates by district
+      letterTemplates = await LetterTemplate.find({ district: district });
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(
+          `Failed to get all letter templates - ${error.message}`,
+          500
+        )
+      );
+    }
+
+    if (!letterTemplates) {
+      res.res(200).json({ letterTemplates: [] });
+    }
+
+    res.status(200).json({
+      letterTemplates: letterTemplates.map((template) =>
+        template.toObject({ getters: true })
+      ),
+    });
+  };
+
+  getLetterTemplateByIdAndDistrict = async (req, res, next) => {
+    const templateId = req.params.id;
+    const district = req.params.district;
+
+    let letterTemplate;
+    try {
+      //get letter template by id and district
+      letterTemplate = await LetterTemplate.findOne({
+        _id: templateId,
+        district: district,
+      });
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(
+          `Failed to get letter template by id and district - ${error.message}`,
+          500
+        )
+      );
+    }
+
+    if (!letterTemplate) {
+      return next(
+        new HttpError(
+          "Could not find any letter template with the provided id and district",
+          404
+        )
+      );
+    }
+
+    res
+      .status(200)
+      .json({ letterTemplate: letterTemplate.toObject({ getters: true }) });
+  };
 }
 
 module.exports = new LetterTemplateController();

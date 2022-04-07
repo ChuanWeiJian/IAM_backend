@@ -5,6 +5,12 @@ const controller = require("../controllers/letter-template-controller");
 
 const router = express.Router();
 
+//get all letter templates by district: /api/letters/:district
+router.get("/:district", controller.getAllLetterTemplates);
+
+//get letter template by id and district: /api/letters/:id/:district
+router.get("/:id/:district", controller.getLetterTemplateByIdAndDistrict);
+
 //create new letter template: /api/letters
 router.post(
   "/",
