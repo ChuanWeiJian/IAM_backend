@@ -8,7 +8,7 @@ const ExamCenter = require("../models/exam-center");
 const School = require("../models/school");
 const Teacher = require("../models/teacher");
 
-class AssignmenntResultController {
+class AssignmentResultController {
   constructor() {}
 
   getAssignmentResultByIdAndRoleResolvedAll = async (req, res, next) => {
@@ -44,4 +44,4 @@ class AssignmenntResultController {
   };
 }
 
-module.exports = new AssignmenntResultController();
+module.exports = new AssignmentResultController();

@@ -5,7 +5,9 @@ const Schema = mongoose.Schema;
 const teacherSchema = new Schema({
   user: { type: mongoose.Types.ObjectId, required: true, ref: "User" },
   icNumber: { type: String },
-  listOfInvigilatorExperience: { type: Array, default: [] },
+  listOfInvigilatorExperience: [
+    { type: mongoose.Types.ObjectId, ref: "InvigilatorExperience" },
+  ],
   race: { type: String },
   homeAddress: { type: String },
   teacherName: { type: String, required: true },

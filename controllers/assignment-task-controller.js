@@ -6,8 +6,10 @@ const HttpError = require("../models/http-error");
 const AssignmentTask = require("../models/assignment-task");
 const ExamCenter = require("../models/exam-center");
 const School = require("../models/school");
+const Teacher = require("../models/teacher");
 const ExamCenterData = require("../models/exam-center-data");
 const AssignmentResult = require("../models/assignment-result");
+const InvigilatorExperience = require("../models/invigilator-exp");
 
 class AssignmentTaskController {
   constructor() {}
@@ -252,7 +254,14 @@ class AssignmentTaskController {
       //retrieve the assignment task by id
       assignmentTask = await AssignmentTask.findById(taskId)
         .populate("examCenters")
-        .populate("examCenterData");
+        .populate("examCenterData")
+        .populate({
+          path: "assignmentResults",
+          populate: {
+            path: "results.invigilators",
+            populate: { path: "listOfInvigilatorExperience" },
+          },
+        });
 
       if (!assignmentTask) {
         return next(
@@ -265,7 +274,9 @@ class AssignmentTaskController {
 
       let examCenterBulkOperation = []; //bulk operation array
       let examCenterDataBulkOperation = []; //bulk operation array
-      let assignmentResultBulkOperation; //bulk operation array
+      let assignmentResultBulkOperation = []; //bulk operation array
+      let invigilatorBulkOperation = []; //bulk operation array
+      let invigilatorExpBulkOperation = []; //bulk operation array
       let newCollectionStatus = assignmentTask.collectionStatus;
       let newExamCenterData = assignmentTask.examCenterData;
 
@@ -360,6 +371,41 @@ class AssignmentTaskController {
           assignmentTask.invigilatorComplete = false;
           assignmentTask.reservedInvigilatorComplete = false;
 
+          //setting up bulk operation to remove all invigilator exp
+          invigilatorExpBulkOperation = [
+            {
+              deleteMany: {
+                filter: {
+                  assignmentTask: assignmentTask._id,
+                },
+              },
+            },
+          ];
+
+          //setting up bulk operation to update the invigilator exp - need optimization (6 role * n exam center * m required invigilator)
+          assignmentTask.assignmentResults.forEach((assignmentResult) => {
+            assignmentResult.results.forEach((result) => {
+              result.invigilators.forEach((invigilator) => {
+                const newExpList =
+                  invigilator.listOfInvigilatorExperience.filter((exp) => {
+                    exp.assignmentTask != assignmentTask.id;
+                  });
+
+                invigilatorBulkOperation.push({
+                  updateOne: {
+                    filter: {
+                      _id: invigilator._id,
+                    },
+                    update: {
+                      listOfInvigilatorExperience: newExpList,
+                    },
+                  },
+                });
+              });
+            });
+          });
+
+          //setting up bulk operation to remove all assignment result
           assignmentResultBulkOperation = assignmentTask.assignmentResults.map(
             (result) => {
               return {
@@ -375,6 +421,7 @@ class AssignmentTaskController {
           assignmentTask.assignmentResults = [];
         }
       }
+
       //update new status of the assignment task
       const newStatus = this.getStatus(assignmentTask);
       if (newStatus !== assignmentTask.status) {
@@ -400,8 +447,12 @@ class AssignmentTaskController {
         });
       }
 
-      if (assignmentResultBulkOperation) {
+      if (assignmentResultBulkOperation.length != 0) {
         await AssignmentResult.bulkWrite(assignmentResultBulkOperation, {
+          session: session,
+        });
+        await Teacher.bulkWrite(invigilatorBulkOperation, { session: session });
+        await InvigilatorExperience.bulkWrite(invigilatorExpBulkOperation, {
           session: session,
         });
       }
