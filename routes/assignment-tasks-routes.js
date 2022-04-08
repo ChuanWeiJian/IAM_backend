@@ -60,9 +60,12 @@ router.patch(
       .isArray({ min: 1 })
       .withMessage(
         "Exam Centers is empty, must contain at least one exam center"
-      )
+      ),
   ],
   controller.editAssignmentTask
 );
+
+//delete assignment task: /api/assignments/:id
+router.delete("/:id", controller.deleteAssignmentTask);
 
 module.exports = router;

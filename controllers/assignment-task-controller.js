@@ -422,6 +422,111 @@ class AssignmentTaskController {
       .status(200)
       .json({ assignmentTask: assignmentTask.toObject({ getters: true }) });
   };
+
+  deleteAssignmentTask = async (req, res, next) => {
+    const taskId = req.params.id;
+
+    let assignmentTask;
+    let examCenterBulkOperation,
+      examCenterDataBulkOperation,
+      assignmentResultBulkOperation;
+    try {
+      assignmentTask = await AssignmentTask.findById(taskId);
+
+      if (!assignmentTask) {
+        return next(
+          new HttpError(
+            "Could not find any assignment task with the provided id",
+            404
+          )
+        );
+      }
+
+      //setting up bulk operation for updating exam center's assignmentTasks
+      examCenterBulkOperation = assignmentTask.examCenters.map((center) => {
+        return {
+          updateOne: {
+            filter: {
+              _id: center,
+            },
+            update: {
+              $pull: {
+                assignmentTasks: assignmentTask.id,
+              },
+            },
+          },
+        };
+      });
+
+      //setting up bulk operation for deleting all the exam center data
+      examCenterDataBulkOperation = assignmentTask.examCenterData.map(
+        (data) => {
+          return {
+            deleteOne: {
+              filter: {
+                _id: data,
+              },
+            },
+          };
+        }
+      );
+
+      //setting up bulk operation for deleting all the assignment result
+      assignmentResultBulkOperation = assignmentTask.assignmentResults.map(
+        (result) => {
+          return {
+            deleteOne: {
+              filter: {
+                _id: result,
+              },
+            },
+          };
+        }
+      );
+
+      //possible need to remove invigilator exp
+
+      //start transaction session
+      const session = await mongoose.startSession();
+      session.startTransaction();
+
+      //delete assignment task
+      await assignmentTask.remove({ session: session });
+
+      //update all exam center's assignmentTasks
+      if (examCenterBulkOperation.length != 0) {
+        await ExamCenter.bulkWrite(examCenterBulkOperation, {
+          session: session,
+        });
+      }
+
+      //delete the all related exam center datas
+      if (examCenterDataBulkOperation.length != 0) {
+        await ExamCenterData.bulkWrite(examCenterDataBulkOperation, {
+          session: session,
+        });
+      }
+
+      //delete all related assignment results
+      if (assignmentResultBulkOperation.length != 0) {
+        await AssignmentResult.bulkWrite(assignmentResultBulkOperation, {
+          session: session,
+        });
+      }
+
+      await session.commitTransaction();
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(
+          `Failed to delete the assignment task - ${error.message}`,
+          500
+        )
+      );
+    }
+
+    res.status(200).json({ message: "Success" });
+  };
 }
 
 module.exports = new AssignmentTaskController();
