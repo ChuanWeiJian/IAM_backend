@@ -387,9 +387,9 @@ class AssignmentTaskController {
             assignmentResult.results.forEach((result) => {
               result.invigilators.forEach((invigilator) => {
                 const newExpList =
-                  invigilator.listOfInvigilatorExperience.filter((exp) => {
-                    exp.assignmentTask != assignmentTask.id;
-                  });
+                  invigilator.listOfInvigilatorExperience.filter(
+                    (exp) => exp.assignmentTask != assignmentTask.id
+                  );
 
                 invigilatorBulkOperation.push({
                   updateOne: {
@@ -477,11 +477,19 @@ class AssignmentTaskController {
     const taskId = req.params.id;
 
     let assignmentTask;
-    let examCenterBulkOperation,
-      examCenterDataBulkOperation,
-      assignmentResultBulkOperation;
+    let examCenterBulkOperation = [];
+    let examCenterDataBulkOperation = [];
+    let assignmentResultBulkOperation = [];
+    let invigilatorExpBulkOperation = [];
+    let invigilatorBulkOperation = [];
     try {
-      assignmentTask = await AssignmentTask.findById(taskId);
+      assignmentTask = await AssignmentTask.findById(taskId).populate({
+        path: "assignmentResults",
+        populate: {
+          path: "results.invigilators",
+          populate: { path: "listOfInvigilatorExperience" },
+        },
+      });
 
       if (!assignmentTask) {
         return next(
@@ -521,21 +529,52 @@ class AssignmentTaskController {
         }
       );
 
+      //setting up bulk operation to remove all invigilator exp
+      invigilatorExpBulkOperation = [
+        {
+          deleteMany: {
+            filter: {
+              assignmentTask: assignmentTask._id,
+            },
+          },
+        },
+      ];
+
+      //setting up bulk operation to update the invigilator exp - need optimization (6 role * n exam center * m required invigilator)
+      assignmentTask.assignmentResults.forEach((assignmentResult) => {
+        assignmentResult.results.forEach((result) => {
+          result.invigilators.forEach((invigilator) => {
+            const newExpList = invigilator.listOfInvigilatorExperience.filter(
+              (exp) => exp.assignmentTask != assignmentTask.id
+            );
+
+            invigilatorBulkOperation.push({
+              updateOne: {
+                filter: {
+                  _id: invigilator._id,
+                },
+                update: {
+                  listOfInvigilatorExperience: newExpList,
+                },
+              },
+            });
+          });
+        });
+      });
+
       //setting up bulk operation for deleting all the assignment result
       assignmentResultBulkOperation = assignmentTask.assignmentResults.map(
         (result) => {
           return {
             deleteOne: {
               filter: {
-                _id: result,
+                _id: result._id,
               },
             },
           };
         }
       );
-
-      //possible need to remove invigilator exp
-
+      
       //start transaction session
       const session = await mongoose.startSession();
       session.startTransaction();
@@ -560,6 +599,11 @@ class AssignmentTaskController {
       //delete all related assignment results
       if (assignmentResultBulkOperation.length != 0) {
         await AssignmentResult.bulkWrite(assignmentResultBulkOperation, {
+          session: session,
+        });
+
+        await Teacher.bulkWrite(invigilatorBulkOperation, { session: session });
+        await InvigilatorExperience.bulkWrite(invigilatorExpBulkOperation, {
           session: session,
         });
       }
