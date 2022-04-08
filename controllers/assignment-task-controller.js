@@ -8,7 +8,6 @@ const ExamCenter = require("../models/exam-center");
 const School = require("../models/school");
 const ExamCenterData = require("../models/exam-center-data");
 const AssignmentResult = require("../models/assignment-result");
-const { assign } = require("lodash");
 
 class AssignmentTaskController {
   constructor() {}
