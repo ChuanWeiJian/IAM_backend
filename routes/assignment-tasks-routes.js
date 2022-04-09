@@ -43,6 +43,9 @@ router.post(
   controller.createNewAssignmentTask
 );
 
+//assign invigilator: /api/assignments/assign/:id/:role
+router.get("/assign/:id/:role", controller.assignInvigilators);
+
 //edit assignment task by id: /api/assignments/:id
 router.patch(
   "/:id",

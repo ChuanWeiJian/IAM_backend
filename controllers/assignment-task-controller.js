@@ -239,6 +239,158 @@ class AssignmentTaskController {
       .json({ assignmentTask: assignmentTask.toObject({ getters: true }) });
   };
 
+  assignInvigilators = async (req, res, next) => {
+    const taskId = req.params.id;
+    const role = req.params.role;
+
+    let assignmentTask;
+    let invigilatorBulkOperation = [];
+    let invigilatorExp = [];
+    let invigilatorPool = [];
+    let results = [];
+    try {
+      assignmentTask = await AssignmentTask.findById(taskId)
+        .populate({
+          path: "examCenters",
+          populate: { path: "school" },
+        })
+        .populate({
+          path: "examCenterData",
+          populate: [
+            {
+              path: `list${_.upperFirst(role)}Required`,
+              populate: { path: "user", select: "school" },
+            },
+            { path: "examCenter" },
+          ],
+        });
+
+      if (!assignmentTask) {
+        return next(
+          new HttpError(
+            "Could not find any assignment task with the provided id",
+            404
+          )
+        );
+      }
+
+      const numberAccessKey = `numberOf${_.upperFirst(role)}Required`;
+      const listAccessKey = `list${_.upperFirst(role)}Required`;
+
+      assignmentTask.examCenterData.forEach((data) => {
+        invigilatorPool = [...invigilatorPool, ...data[listAccessKey]];
+      });
+
+      //shuffle the invigilator pool
+      invigilatorPool = _.shuffle(invigilatorPool);
+
+      //loop through the exam center data
+      assignmentTask.examCenterData.forEach((data) => {
+        //create new result for the current exam center
+        const newResult = {
+          examCenter: data.examCenter.id,
+          invigilators: [],
+        };
+
+        //filter out the possible invigilators for the exam center
+        let listOfPossibleInvigilator = invigilatorPool.filter(
+          (invigilator) =>
+            invigilator.user.school.toString() !=
+            data.examCenter.school.toString()
+        );
+
+        //loop through the number of required invigilator requested by the exam center
+        for (var idx = 1; idx <= data[numberAccessKey]; idx++) {
+          //randomly select an invigilator
+          const randomIndex = _.random(0, listOfPossibleInvigilator.length - 1);
+
+          const selectedInvigilator = listOfPossibleInvigilator[randomIndex];
+
+          //insert the selected invigilator into the array
+          newResult.invigilators.push(selectedInvigilator.id);
+
+          //create a new invigilator experience
+          const newExp = new InvigilatorExperience({
+            role: role,
+            assignmentTask: taskId,
+            assignedTo: data.examCenter.id,
+          });
+          invigilatorExp.push(newExp);
+
+          //setting up bulk operation to update teacher's listOfInvigilatorExperience
+          invigilatorBulkOperation.push({
+            updateOne: {
+              filter: {
+                _id: selectedInvigilator._id,
+              },
+              update: {
+                $push: {
+                  listOfInvigilatorExperience: newExp,
+                },
+              },
+            },
+          });
+
+          //remove the selected invigilator from the possible list of invigilators
+          listOfPossibleInvigilator.splice(randomIndex, 1);
+
+          //remove the selected invigilator from the invigilator pool
+          _.remove(
+            invigilatorPool,
+            (invigilator) => invigilator.id == selectedInvigilator.id
+          );
+        }
+
+        //push the result for the current exam center into results array
+        results.push(newResult);
+      });
+
+      const assignmentResult = new AssignmentResult({
+        assignmentTask: taskId,
+        role: role,
+        results: results,
+      });
+
+      //update assignment task information
+      assignmentTask[`${role}Complete`] = true;
+      assignmentTask.assignmentResults = [
+        ...assignmentTask.assignmentResults,
+        assignmentResult,
+      ];
+      assignmentTask.status = this.getStatus(assignmentTask);
+
+      
+      //start transaction session
+      const session = await mongoose.startSession();
+      await session.startTransaction();
+
+      //save the assignment result
+      await assignmentResult.save({ session: session });
+
+      //save new assignment task
+      await assignmentTask.save({ session: session });
+
+      //save all new invigilator experiences
+      await InvigilatorExperience.insertMany(invigilatorExp, {
+        session: session,
+      });
+
+      //update all teacher's invigilator experiences
+      await Teacher.bulkWrite(invigilatorBulkOperation, {session:session})
+
+      await session.commitTransaction();
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(`Failed to assign invigilators - ${error.message}`, 500)
+      );
+    }
+
+    res.status(200).json({
+      assignmentTask: assignmentTask.toObject({ getters: true }),
+    });
+  };
+
   editAssignmentTask = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -574,7 +726,7 @@ class AssignmentTaskController {
           };
         }
       );
-      
+
       //start transaction session
       const session = await mongoose.startSession();
       session.startTransaction();
