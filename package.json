@@ -15,11 +15,13 @@
     "express": "^4.17.3",
     "express-validator": "^6.14.0",
     "generate-password": "^1.7.0",
+    "html-pdf-node": "^1.0.8",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
     "mongodb": "^4.4.1",
     "mongoose": "^5.11.3",
     "mongoose-unique-validator": "^2.0.3",
+    "nodemailer": "^6.7.3",
     "uuid": "^8.3.2"
   },
   "devDependencies": {

@@ -37,4 +37,15 @@ router.patch(
 //delete letter template: /api/letters/:id
 router.delete("/:id", controller.deleteLetterTemplate);
 
+//compile letter: /api/letters/compile
+router.post(
+  "/compile",
+  [
+    check("letterTemplate").not().isEmpty().withMessage("Letter template is not chosen"),
+    check("taskId").not().isEmpty().withMessage("Assignment task id is missing"),
+    check("role").not().isEmpty().withMessage("Role is missing"),
+  ],
+  controller.compileLetter
+);
+
 module.exports = router;
