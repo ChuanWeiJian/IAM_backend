@@ -17,13 +17,38 @@ class SchoolController {
       return next(new HttpError(errors.errors[0].msg, 422));
     }
 
-    const { name, schoolCode, address, district } = req.body;
+    const {
+      schoolName,
+      schoolCode,
+      schoolAddress,
+      district,
+      postcode,
+      city,
+      stateCode,
+      areaCode,
+      schoolPhoneNumber,
+      taxNumber,
+      codeDun,
+      codeParlimen,
+      typeOfSchool,
+      schoolEmailAddress,
+    } = req.body;
 
     const newSchool = new School({
-      name: name,
+      schoolName: schoolName,
       schoolCode: schoolCode,
-      address: address,
+      schoolAddress: schoolAddress,
       district: district,
+      postcode: postcode,
+      city: city,
+      stateCode: stateCode,
+      areaCode: areaCode,
+      schoolPhoneNumber: schoolPhoneNumber,
+      taxNumber: taxNumber,
+      codeDun: codeDun,
+      codeParlimen: codeParlimen,
+      typeOfSchool: typeOfSchool,
+      schoolEmailAddress: schoolEmailAddress,
     });
 
     let newExamSecretary, password;
@@ -54,8 +79,6 @@ class SchoolController {
         district: district,
       });
       await newExamSecretary.save({ session: session });
-      newSchool.examSecretary = newExamSecretary.id;
-      await newSchool.save({ session: session });
       await session.commitTransaction();
       //end transaction
     } catch (error) {
@@ -65,9 +88,7 @@ class SchoolController {
       );
     }
 
-    res
-      .status(201)
-      .json({ login: newExamSecretary.login, password: password });
+    res.status(201).json({ login: newExamSecretary.login, password: password });
   };
 
   getAllSchools = async (req, res, next) => {
@@ -167,7 +188,21 @@ class SchoolController {
       return next(new HttpError(errors.errors[0].msg, 422));
     }
 
-    const { name, schoolCode, address } = req.body;
+    const {
+      schoolName,
+      schoolCode,
+      schoolAddress,
+      postcode,
+      city,
+      stateCode,
+      areaCode,
+      schoolPhoneNumber,
+      taxNumber,
+      codeDun,
+      codeParlimen,
+      typeOfSchool,
+      schoolEmailAddress,
+    } = req.body;
     const schoolId = req.params.id;
 
     let school;
@@ -182,9 +217,19 @@ class SchoolController {
       }
 
       //update school information
-      school.name = name;
+      school.schoolName = schoolName;
       school.schoolCode = schoolCode;
-      school.address = address;
+      school.schoolAddress = schoolAddress;
+      school.postcode = postcode;
+      school.city = city;
+      school.stateCode = stateCode;
+      school.areaCode = areaCode;
+      school.codeDun = codeDun;
+      school.codeParlimen = codeParlimen;
+      school.typeOfSchool = typeOfSchool;
+      school.taxNumber = taxNumber;
+      school.schoolPhoneNumber = schoolPhoneNumber;
+      school.schoolEmailAddress = schoolEmailAddress;
       await school.save();
     } catch (error) {
       console.log(error);

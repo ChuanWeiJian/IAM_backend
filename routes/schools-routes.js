@@ -21,13 +21,44 @@ router.get(
 router.post(
   "/",
   [
-    check("name").not().isEmpty().withMessage("Name field is required"),
+    check("schoolName").not().isEmpty().withMessage("Name field is required"),
     check("schoolCode")
       .not()
       .isEmpty()
       .withMessage("School Code field is required"),
-    check("address").not().isEmpty().withMessage("Address field is required"),
+    check("schoolAddress").not().isEmpty().withMessage("Address field is required"),
     check("district").not().isEmpty().withMessage("District field is missing"),
+    check("postcode").not().isEmpty().withMessage("Postcode field is required"),
+    check("city").not().isEmpty().withMessage("City field is required"),
+    check("stateCode")
+      .not()
+      .isEmpty()
+      .withMessage("StateCode field is required"),
+    check("areaCode").not().isEmpty().withMessage("AreaCode field is required"),
+    check("schoolPhoneNumber")
+      .not()
+      .isEmpty()
+      .withMessage("School Phone Number field is required"),
+    check("taxNumber")
+      .not()
+      .isEmpty()
+      .withMessage("Tax Number field is required"),
+    check("codeDun").not().isEmpty().withMessage("CodeDUN field is required"),
+    check("codeParlimen")
+      .not()
+      .isEmpty()
+      .withMessage("CodeParlimen field is required"),
+    check("typeOfSchool")
+      .not()
+      .isEmpty()
+      .withMessage("Type Of School field is required"),
+    check("schoolEmailAddress")
+      .not()
+      .isEmpty()
+      .withMessage("School Email Address field is required"),
+    check("schoolEmailAddress")
+      .isEmail()
+      .withMessage("School Email Address field is invalid"),
   ],
   controller.registerSchool
 );
@@ -36,12 +67,43 @@ router.post(
 router.patch(
   "/:id",
   [
-    check("name").not().isEmpty().withMessage("Name field is required"),
+    check("schoolName").not().isEmpty().withMessage("Name field is required"),
     check("schoolCode")
       .not()
       .isEmpty()
       .withMessage("School Code field is required"),
-    check("address").not().isEmpty().withMessage("Address field is required"),
+    check("schoolAddress").not().isEmpty().withMessage("Address field is required"),
+    check("postcode").not().isEmpty().withMessage("Postcode field is required"),
+    check("city").not().isEmpty().withMessage("City field is required"),
+    check("stateCode")
+      .not()
+      .isEmpty()
+      .withMessage("StateCode field is required"),
+    check("areaCode").not().isEmpty().withMessage("AreaCode field is required"),
+    check("schoolPhoneNumber")
+      .not()
+      .isEmpty()
+      .withMessage("School Phone Number field is required"),
+    check("taxNumber")
+      .not()
+      .isEmpty()
+      .withMessage("Tax Number field is required"),
+    check("codeDun").not().isEmpty().withMessage("CodeDUN field is required"),
+    check("codeParlimen")
+      .not()
+      .isEmpty()
+      .withMessage("CodeParlimen field is required"),
+    check("typeOfSchool")
+      .not()
+      .isEmpty()
+      .withMessage("Type Of School field is required"),
+    check("schoolEmailAddress")
+      .not()
+      .isEmpty()
+      .withMessage("School Email Address field is required"),
+    check("schoolEmailAddress")
+      .isEmail()
+      .withMessage("School Email Address field is invalid"),
   ],
   controller.editSchoolInformation
 );

@@ -40,6 +40,8 @@ class ExamCenterController {
       school.examCenters.push(newExamCenter);
       await school.save({ session: session });
       await session.commitTransaction();
+
+      await newExamCenter.populate("school").execPopulate();
     } catch (error) {
       console.log(error);
       return next(
