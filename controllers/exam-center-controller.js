@@ -216,6 +216,7 @@ class ExamCenterController {
       examCenter.examCenterCode = examCenterCode;
       examCenter.safeRoomNo = safeRoomNo;
       await examCenter.save();
+      await examCenter.populate("school").execPopulate();
     } catch (error) {
       console.log(error);
       return next(

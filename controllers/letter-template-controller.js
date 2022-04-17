@@ -261,30 +261,6 @@ class LetterTemplateController {
         });
       });
 
-      //loop through each letter contents
-      letterContents.forEach((letter) => {
-        //setting up options of pdf (format, name, path to store and margin)
-        let options = {
-          format: "A4",
-          path: `./letters/compiled/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
-          margin: { top: "10mm", left: "10mm", right: "10mm" },
-        };
-        //replace the content of basic template
-        const newLetterContent = _.replace(
-          style.letterBasicTemplate,
-          "letter-content",
-          letter.content
-        );
-
-        let file = {
-          content: newLetterContent,
-        };
-
-        //generate pdf and save in file
-        pdfGenerator.generatePdf(file, options);
-      });
-
-      //start to send email
       //initialize transporter with pool connection - authentication with oAuth2
       const transporter = nodemailer.createTransport({
         service: "gmail",
@@ -301,43 +277,67 @@ class LetterTemplateController {
         },
       });
 
-      //generate bunch of emails with attachment of the newly created pdf
-      let emails = [];
-      letterContents.forEach((letter) => {
-        let email = {
-          from: "chuanwj65@gmail.com",
-          to: "chuanweijian@gmail.com", //letter.invigilator.teacherEmailAddress
-          subject: letterTemplate.title,
-          text: "Please refer to the attachment: ",
-          attachments: [
-            {
-              path: `./letters/compiled/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
-            },
-          ],
-        };
+      //generate pdf and emails
+      let emails = await Promise.all(
+        letterContents.map(async (letter) => {
+          //setting up options of pdf (format, name, path to store and margin)
+          let options = {
+            format: "A4",
+            path: `./letters/compiled/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
+            margin: { top: "10mm", left: "10mm", right: "10mm" },
+          };
+          //replace the content of basic template
+          const newLetterContent = _.replace(
+            style.letterBasicTemplate,
+            "letter-content",
+            letter.content
+          );
 
-        emails.push(email);
-      });
+          let file = {
+            content: newLetterContent,
+          };
 
-      transporter.on("idle", function () {
-        while (transporter.isIdle() && emails.length) {
+          //generate pdf and save in file
+          await pdfGenerator.generatePdf(file, options);
+
+          //generate email with attachment of the newly created pdf
+          let email = {
+            from: "chuanwj65@gmail.com",
+            to: "chuanweijian@gmail.com", //letter.invigilator.teacherEmailAddress
+            subject: letterTemplate.title,
+            text: "Please refer to the attachment: ",
+            attachments: [
+              {
+                path: `./letters/compiled/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
+              },
+            ],
+          };
+
+          //return the generated email into array
+          return email;
+        })
+      );
+
+      //run after the emails and pdfs have been generated
+      if (emails.length > 0) {
+        while (emails.length) {
           const email = emails.shift();
           transporter.sendMail(email, (error, info) => {
             if (error) {
               return next(
                 new HttpError(`Failed to send letter - ${error}`, 500)
               );
+            } else {
+              //delete the attachment after sent email synchronous
+              fs.unlink(email.attachments[0].path, (err) => {
+                if (err) {
+                  console.log(err);
+                }
+              });
             }
-
-            //delete the attachment after sent email
-            fs.unlink(email.attachments[0].path, (err) => {
-              if (err) {
-                console.log(err);
-              }
-            });
           });
         }
-      });
+      }
     } catch (error) {
       console.log(error);
       return next(
@@ -348,7 +348,7 @@ class LetterTemplateController {
       );
     }
 
-    res.json({ assignmentTask: assignmentTask.toObject({ getters: true }) });
+    res.json({ message: "success" });
   };
 }
 

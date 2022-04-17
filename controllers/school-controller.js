@@ -59,7 +59,6 @@ class SchoolController {
 
       //save new school
       const school = await newSchool.save({ session: session });
-      console.log(school.id);
 
       //register new exam secretary
       //random generate a password

@@ -31,9 +31,9 @@ router.post(
       .isEmpty()
       .withMessage("Collection Date field is required"),
     check("examCenters")
-      .isArray({ min: 1 })
+      .isArray({ min: 2 })
       .withMessage(
-        "Exam Centers is empty, must contain at least one exam center"
+        "Exam Centers is empty, must contain at least two exam center"
       ),
     check("district")
       .not()

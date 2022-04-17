@@ -17,7 +17,6 @@ router.post(
   [
     check("title").not().isEmpty().withMessage("Title field is required"),
     check("content").not().isEmpty().withMessage("Content field is required"),
-    check("tags").isArray({ min: 1 }).withMessage("Tags cannot be empty"),
     check("district").not().isEmpty().withMessage("District field is missing"),
   ],
   controller.createLetterTemplate
@@ -29,7 +28,6 @@ router.patch(
   [
     check("title").not().isEmpty().withMessage("Title field is required"),
     check("content").not().isEmpty().withMessage("Content field is required"),
-    check("tags").isArray({ min: 1 }).withMessage("Tags cannot be empty"),
   ],
   controller.editLetterTemplate
 );

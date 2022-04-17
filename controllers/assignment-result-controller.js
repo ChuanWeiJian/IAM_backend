@@ -25,7 +25,7 @@ class AssignmentResultController {
         role: role,
       })
         .populate("assignmentTask")
-        .populate("results.examCenter")
+        .populate({ path: "results.examCenter", populate: { path: "school" } })
         .populate({
           path: "results.invigilators",
           populate: {
@@ -61,7 +61,7 @@ class AssignmentResultController {
     }
     const resultId = req.params.id;
 
-    const { results, district } = req.body;
+    const { results } = req.body;
     let assignmentResult;
     let allAssignedInvigilators = [];
     let invigilatorExpBulkOperation = [];
