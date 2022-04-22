@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const HttpError = require("./models/http-error");
 
+const userRoutes = require("./routes/users-routes");
 const schoolRoutes = require("./routes/schools-routes");
 const examCenterRoutes = require("./routes/exam-centers-routes");
 const assignmentTaskRoutes = require("./routes/assignment-tasks-routes");
@@ -24,6 +25,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use("/api/users", userRoutes);
 app.use("/api/schools", schoolRoutes);
 app.use("/api/examcenters", examCenterRoutes);
 app.use("/api/assignments", assignmentTaskRoutes);
