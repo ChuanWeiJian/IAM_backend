@@ -5,6 +5,9 @@ const pdfGenerator = require("html-pdf-node");
 const style = require("../letters/source/letter");
 const fs = require("fs");
 const nodemailer = require("nodemailer");
+const { google } = require("googleapis");
+const OAuth2 = google.auth.OAuth2;
+require("dotenv").config();
 
 const HttpError = require("../models/http-error");
 const LetterTemplate = require("../models/letter-template");
@@ -12,6 +15,43 @@ const AssignmentTask = require("../models/assignment-task");
 const AssignmentResult = require("../models/assignment-result");
 const ExamCenter = require("../models/exam-center");
 const Teacher = require("../models/teacher");
+
+//create transporter for email sending - with oAuth 2 authentication
+const createTransporter = async () => {
+  const oauth2Client = new OAuth2(
+    process.env.CLIENT_ID,
+    process.env.CLIENT_SECRET,
+    "https://developers.google.com/oauthplayground"
+  );
+
+  oauth2Client.setCredentials({
+    refresh_token: process.env.REFRESH_TOKEN,
+  });
+
+  const accessToken = await new Promise((resolve, reject) => {
+    oauth2Client.getAccessToken((err, token) => {
+      if (err) {
+        reject("Failed to create access token");
+      }
+      resolve(token);
+    });
+  });
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    pool: true,
+    auth: {
+      type: "OAuth2",
+      user: process.env.EMAIL,
+      accessToken,
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      refreshToken: process.env.REFRESH_TOKEN,
+    },
+  });
+
+  return transporter;
+};
 
 class LetterTemplateController {
   constructor() {}
@@ -262,20 +302,7 @@ class LetterTemplateController {
       });
 
       //initialize transporter with pool connection - authentication with oAuth2
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        pool: true,
-        auth: {
-          type: "OAuth2",
-          user: "chuanwj65@gmail.com",
-          pass: "weijian@0511",
-          clientId:
-            "63731112241-5oba2k11qspdakg3eclkjd851m836uk9.apps.googleusercontent.com",
-          clientSecret: "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",
-          refreshToken:
-            "1//04368Ipc9zqxCCgYIARAAGAQSNwF-L9IruRZEq9DosH9mTRG6HlFiL1bQz--bE4sgca6wmNO5TmfQT6sE4jPetb98qP7N3Y_hY9s",
-        },
-      });
+      const transporter = await createTransporter();
 
       //generate pdf and emails
       let emails = await Promise.all(
@@ -303,7 +330,7 @@ class LetterTemplateController {
           //generate email with attachment of the newly created pdf
           let email = {
             from: "chuanwj65@gmail.com",
-            to: "chuanweijian@gmail.com", //letter.invigilator.teacherEmailAddress
+            to: "wei.jian@graduate.utm.my", //letter.invigilator.teacherEmailAddress
             subject: letterTemplate.title,
             text: "Please refer to the attachment: ",
             attachments: [
