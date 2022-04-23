@@ -1,12 +1,73 @@
 const { validationResult } = require("express-validator");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const HttpError = require("../models/http-error");
 const User = require("../models/user");
 
 class UserController {
   constructor() {}
+
+  login = async (req, res, next) => {
+    const { login, password } = req.body;
+
+    let user, token;
+    try {
+      //restrict that only admin & officer account can login to the IAM module
+
+      user = await User.findOne({
+        login: login,
+        status: 1,
+        userGroup: { $in: ["Admin", "Officer"] },
+      });
+
+      //validating login
+      if (!user) {
+        return next(
+          new HttpError("Incorrect credentials, please try again", 401)
+        );
+      }
+
+      //validating password
+      let isValidPassword = false;
+      isValidPassword = await bcrypt.compare(password, user.password);
+
+      if (!isValidPassword) {
+        return next(
+          new HttpError("Incorrect credentials, please try again", 401)
+        );
+      }
+
+      token = jwt.sign(
+        {
+          userId: user.id,
+          login: user.login,
+          district: user.district,
+          userGroup: user.userGroup,
+        },
+        process.env.JWT_KEY,
+        { expiresIn: "1h" }
+      );
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(`Failed to sign in user - ${error.message}`, 500)
+      );
+    }
+
+    res
+      .status(200)
+      .json({
+        user: {
+          id: user.id,
+          login: user.login,
+          userGroup: user.userGroup,
+          district: user.district,
+        },
+        token: token,
+      });
+  };
 
   signUpOfficerAccount = async (req, res, next) => {
     const errors = validationResult(req);

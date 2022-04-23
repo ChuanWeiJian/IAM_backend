@@ -5,6 +5,9 @@ const controller = require("../controllers/user-controller");
 
 const router = express.Router();
 
+//login user: /api/users/login
+router.post("/login", controller.login);
+
 //sign up new officer account: /api/users
 router.post(
   "/",
