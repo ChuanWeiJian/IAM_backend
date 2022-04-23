@@ -47,7 +47,7 @@ class UserController {
           userGroup: user.userGroup,
         },
         process.env.JWT_KEY,
-        { expiresIn: "1h" }
+        { expiresIn: "2h" }
       );
     } catch (error) {
       console.log(error);

@@ -1,12 +1,16 @@
 const express = require("express");
 const { check } = require("express-validator");
 
+const checkAuth = require("../middleware/check-admin-auth");
 const controller = require("../controllers/user-controller");
 
 const router = express.Router();
 
 //login user: /api/users/login
 router.post("/login", controller.login);
+
+//middleware to check authorization and authentication
+router.use(checkAuth);
 
 //sign up new officer account: /api/users
 router.post(

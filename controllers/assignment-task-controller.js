@@ -21,7 +21,7 @@ class AssignmentTaskController {
       return next(new HttpError(errors.errors[0].msg, 422));
     }
 
-    const { title, examType, collectionDate, examCenters, district } = req.body;
+    const { title, examType, collectionDate, examCenters } = req.body;
 
     //create collection status using array
     const collectionStatus = [];
@@ -36,7 +36,7 @@ class AssignmentTaskController {
       collectionDate: new Date(collectionDate),
       examCenters: examCenters,
       collectionStatus: collectionStatus,
-      district: district,
+      district: req.district,
     });
 
     try {
@@ -115,12 +115,10 @@ class AssignmentTaskController {
   };
 
   getAllAssignmentTasks = async (req, res, next) => {
-    const district = req.params.district;
-
     let assignmentTasks;
     try {
       //get all assignment tasks
-      assignmentTasks = await AssignmentTask.find({ district: district });
+      assignmentTasks = await AssignmentTask.find({ district: req.district });
       //update status
       let bulkOperations = [];
       assignmentTasks.forEach((task) => {
@@ -165,14 +163,13 @@ class AssignmentTaskController {
   };
 
   getAssignmentTaskByIdAndDistrict = async (req, res, next) => {
-    const district = req.params.district;
     const taskId = req.params.id;
 
     let assignmentTask;
     try {
       assignmentTask = await AssignmentTask.findOne({
         _id: taskId,
-        district: district,
+        district: req.district,
       });
     } catch (error) {
       console.log(error);
@@ -199,14 +196,13 @@ class AssignmentTaskController {
   };
 
   getAssignmentTaskByIdAndDistrictResolvedAll = async (req, res, next) => {
-    const district = req.params.district;
     const taskId = req.params.id;
 
     let assignmentTask;
     try {
       assignmentTask = await AssignmentTask.findOne({
         _id: taskId,
-        district: district,
+        district: req.district,
       }).populate({ path: "examCenters", populate: { path: "school" } });
 
       if (
@@ -359,7 +355,6 @@ class AssignmentTaskController {
       ];
       assignmentTask.status = this.getStatus(assignmentTask);
 
-      
       //start transaction session
       const session = await mongoose.startSession();
       await session.startTransaction();
@@ -376,7 +371,7 @@ class AssignmentTaskController {
       });
 
       //update all teacher's invigilator experiences
-      await Teacher.bulkWrite(invigilatorBulkOperation, {session:session})
+      await Teacher.bulkWrite(invigilatorBulkOperation, { session: session });
 
       await session.commitTransaction();
     } catch (error) {

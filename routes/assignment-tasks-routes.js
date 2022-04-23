@@ -1,19 +1,23 @@
 const express = require("express");
 const { check } = require("express-validator");
 
+const checkAuth = require("../middleware/check-officer-auth");
 const controller = require("../controllers/assignment-task-controller");
 
 const router = express.Router();
 
-//get all assignment tasks by district: /api/assignments/:district
-router.get("/:district", controller.getAllAssignmentTasks);
+//check the authentication & authorization
+router.use(checkAuth);
 
-//get one assignment task by id and district: /api/assignments/:id/:district
-router.get("/:id/:district", controller.getAssignmentTaskByIdAndDistrict);
+//get all assignment tasks by district: /api/assignments
+router.get("/", controller.getAllAssignmentTasks);
 
-//get one assignment task by id and district with resolved exam center & exam center data: /api/assignments/resolve/:id/:district
+//get one assignment task by id and district: /api/assignments/:id
+router.get("/:id", controller.getAssignmentTaskByIdAndDistrict);
+
+//get one assignment task by id and district with resolved exam center & exam center data: /api/assignments/resolve/:id
 router.get(
-  "/resolve/:id/:district",
+  "/resolve/:id",
   controller.getAssignmentTaskByIdAndDistrictResolvedAll
 );
 
@@ -35,10 +39,6 @@ router.post(
       .withMessage(
         "Exam Centers is empty, must contain at least two exam center"
       ),
-    check("district")
-      .not()
-      .isEmpty()
-      .withMessage("District information is missing"),
   ],
   controller.createNewAssignmentTask
 );

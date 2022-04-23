@@ -1,19 +1,23 @@
 const express = require("express");
 const { check } = require("express-validator");
 
+const checkAuth = require("../middleware/check-officer-auth");
 const controller = require("../controllers/school-controller");
 
 const router = express.Router();
 
-//get all schools by district: /api/schools/:district
-router.get("/:district", controller.getAllSchools);
+//check the authentication & authorization
+router.use(checkAuth);
 
-//get school by id & district: /api/schools/:id/:district
-router.get("/:id/:district", controller.getSchoolByIdAndDistrict);
+//get all schools by district: /api/schools
+router.get("/", controller.getAllSchools);
 
-//get school by id & district: /api/schools/examcenters/:id/:district
+//get school by id & district: /api/schools/:id
+router.get("/:id", controller.getSchoolByIdAndDistrict);
+
+//get school by id & district: /api/schools/examcenters/:id
 router.get(
-  "/examcenters/:id/:district",
+  "/examcenters/:id",
   controller.getSchoolByIdAndDistrictWithResolvedExamCenters
 );
 
@@ -26,8 +30,10 @@ router.post(
       .not()
       .isEmpty()
       .withMessage("School Code field is required"),
-    check("schoolAddress").not().isEmpty().withMessage("Address field is required"),
-    check("district").not().isEmpty().withMessage("District field is missing"),
+    check("schoolAddress")
+      .not()
+      .isEmpty()
+      .withMessage("Address field is required"),
     check("postcode").not().isEmpty().withMessage("Postcode field is required"),
     check("city").not().isEmpty().withMessage("City field is required"),
     check("stateCode")
@@ -72,7 +78,10 @@ router.patch(
       .not()
       .isEmpty()
       .withMessage("School Code field is required"),
-    check("schoolAddress").not().isEmpty().withMessage("Address field is required"),
+    check("schoolAddress")
+      .not()
+      .isEmpty()
+      .withMessage("Address field is required"),
     check("postcode").not().isEmpty().withMessage("Postcode field is required"),
     check("city").not().isEmpty().withMessage("City field is required"),
     check("stateCode")

@@ -63,12 +63,12 @@ class LetterTemplateController {
       return next(new HttpError(errors.errors[0].msg, 422));
     }
 
-    const { title, content, tags, district } = req.body;
+    const { title, content, tags } = req.body;
     const letterTemplate = new LetterTemplate({
       title: title,
       content: content,
       tags: tags,
-      district: district,
+      district: req.district,
     });
 
     try {
@@ -90,12 +90,10 @@ class LetterTemplateController {
   };
 
   getAllLetterTemplates = async (req, res, next) => {
-    const district = req.params.district;
-
     let letterTemplates;
     try {
       //get all letter templates by district
-      letterTemplates = await LetterTemplate.find({ district: district });
+      letterTemplates = await LetterTemplate.find({ district: req.district });
     } catch (error) {
       console.log(error);
       return next(
@@ -119,14 +117,13 @@ class LetterTemplateController {
 
   getLetterTemplateByIdAndDistrict = async (req, res, next) => {
     const templateId = req.params.id;
-    const district = req.params.district;
 
     let letterTemplate;
     try {
       //get letter template by id and district
       letterTemplate = await LetterTemplate.findOne({
         _id: templateId,
-        district: district,
+        district: req.district,
       });
     } catch (error) {
       console.log(error);

@@ -17,11 +17,11 @@ class ExamCenterController {
     }
 
     let school;
-    const { examCenterCode, safeRoomNo, schoolId, district } = req.body;
+    const { examCenterCode, safeRoomNo, schoolId } = req.body;
     const newExamCenter = new ExamCenter({
       examCenterCode: examCenterCode,
       safeRoomNo: safeRoomNo,
-      district: district,
+      district: req.district,
       school: schoolId,
       assignmentTasks: [],
     });
@@ -58,12 +58,10 @@ class ExamCenterController {
   };
 
   getAllExamCenters = async (req, res, next) => {
-    const district = req.params.district;
-
     let examCenters;
     try {
       //get all registered exam centers by district
-      examCenters = await ExamCenter.find({ district: district });
+      examCenters = await ExamCenter.find({ district: req.district });
     } catch (error) {
       console.log(error);
       return next(
@@ -88,12 +86,10 @@ class ExamCenterController {
   };
 
   getAllExamCentersResolvedSchool = async (req, res, next) => {
-    const district = req.params.district;
-
     let examCenters;
     try {
       //get all registered exam centers by district
-      examCenters = await ExamCenter.find({ district: district }).populate(
+      examCenters = await ExamCenter.find({ district: req.district }).populate(
         "school"
       );
     } catch (error) {
@@ -121,14 +117,13 @@ class ExamCenterController {
 
   getExamCenterByIdAndDistrict = async (req, res, next) => {
     const examCenterId = req.params.id;
-    const district = req.params.district;
 
     let examCenter;
     try {
       //get exam center by id & district
       examCenter = await ExamCenter.findOne({
         _id: examCenterId,
-        district: district,
+        district: req.district,
       });
     } catch (error) {
       console.log(error);
@@ -156,14 +151,13 @@ class ExamCenterController {
 
   getExamCenterByIdAndDistrictResolvedAll = async (req, res, next) => {
     const examCenterId = req.params.id;
-    const district = req.params.district;
 
     let examCenter;
     try {
       //get exam center by id & district
       examCenter = await ExamCenter.findOne({
         _id: examCenterId,
-        district: district,
+        district: req.district,
       })
         .populate("school")
         .populate("assignmentTasks");

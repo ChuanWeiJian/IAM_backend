@@ -1,9 +1,13 @@
 const express = require("express");
 const { check } = require("express-validator");
 
+const checkAuth = require("../middleware/check-officer-auth");
 const controller = require("../controllers/assignment-result-controller");
 
 const router = express.Router();
+
+//check the authentication & authorization
+router.use(checkAuth);
 
 //get assignment result by district: /api/results/:id/:role
 router.get("/:id/:role", controller.getAssignmentResultByIdAndRoleResolvedAll);

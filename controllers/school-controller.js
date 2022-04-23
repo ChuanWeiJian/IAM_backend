@@ -21,7 +21,6 @@ class SchoolController {
       schoolName,
       schoolCode,
       schoolAddress,
-      district,
       postcode,
       city,
       stateCode,
@@ -38,7 +37,7 @@ class SchoolController {
       schoolName: schoolName,
       schoolCode: schoolCode,
       schoolAddress: schoolAddress,
-      district: district,
+      district: req.district,
       postcode: postcode,
       city: city,
       stateCode: stateCode,
@@ -75,7 +74,7 @@ class SchoolController {
         password: hashPassword,
         userGroup: "Exam Secretary",
         school: school,
-        district: district,
+        district: req.district,
       });
       await newExamSecretary.save({ session: session });
       await session.commitTransaction();
@@ -91,12 +90,10 @@ class SchoolController {
   };
 
   getAllSchools = async (req, res, next) => {
-    const district = req.params.district;
-
     let schools;
     try {
       //get all schools by district
-      schools = await School.find({ district: district });
+      schools = await School.find({ district: req.district });
     } catch (error) {
       console.log(error);
       return next(
@@ -117,12 +114,11 @@ class SchoolController {
 
   getSchoolByIdAndDistrict = async (req, res, next) => {
     const schoolId = req.params.id;
-    const district = req.params.district;
 
     let school;
     try {
       //get school by id & district
-      school = await School.findOne({ _id: schoolId, district: district });
+      school = await School.findOne({ _id: schoolId, district: req.district });
     } catch (error) {
       console.log(error);
       return next(
@@ -148,14 +144,13 @@ class SchoolController {
 
   getSchoolByIdAndDistrictWithResolvedExamCenters = async (req, res, next) => {
     const schoolId = req.params.id;
-    const district = req.params.district;
 
     let school;
     try {
       //get school by id & district with resolved exam centers
       school = await School.findOne({
         _id: schoolId,
-        district: district,
+        district: req.district,
       }).populate("examCenters");
     } catch (error) {
       console.log(error);
