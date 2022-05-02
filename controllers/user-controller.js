@@ -19,7 +19,7 @@ class UserController {
       user = await User.findOne({
         login: login,
         status: 1,
-        userGroup: { $in: ["Admin", "Officer"] },
+        userGroup: { $in: ["Admin", "Officer", "Teacher"] },
       });
 
       //validating login

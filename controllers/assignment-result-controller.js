@@ -163,6 +163,45 @@ class AssignmentResultController {
       .status(200)
       .json({ assignmentResult: assignmentResult.toObject({ getters: true }) });
   };
+
+  getAllAssignmentResultInvigilator = async (req, res, next) => {
+    const userId = req.params.id;
+
+    let teacherProfile;
+    try {
+      teacherProfile = await Teacher.findOne({ user: userId }).populate([
+        { path: "user", select: "school", populate: { path: "school" } },
+        {
+          path: "listOfInvigilatorExperience",
+          populate: [
+            { path: "assignmentTask" },
+            { path: "assignedTo", populate: { path: "school" } },
+          ],
+        },
+      ]);
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(
+          `Failed to retrieve assignment results - ${error.message}`,
+          500
+        )
+      );
+    }
+
+    if (!teacherProfile) {
+      return next(
+        new HttpError(
+          "Could not find any teacher profile with the provided id",
+          404
+        )
+      );
+    }
+
+    res
+      .status(200)
+      .json({ profile: teacherProfile.toObject({ getters: true }) });
+  };
 }
 
 module.exports = new AssignmentResultController();

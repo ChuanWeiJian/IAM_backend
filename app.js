@@ -9,6 +9,7 @@ const examCenterRoutes = require("./routes/exam-centers-routes");
 const assignmentTaskRoutes = require("./routes/assignment-tasks-routes");
 const letterTemplateRoutes = require("./routes/letter-templates-routes");
 const assignmentResultRouters = require("./routes/assignment-results-routers");
+const assignmentResultInvigilatorRouters = require("./routes/assignment-results-invigilator-routers");
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use("/api/examcenters", examCenterRoutes);
 app.use("/api/assignments", assignmentTaskRoutes);
 app.use("/api/letters", letterTemplateRoutes);
 app.use("/api/results", assignmentResultRouters);
+app.use("/api/results-invigilator", assignmentResultInvigilatorRouters);
 
 app.use((req, res, next) => {
   return next(new HttpError("Could not find this route", 404));
