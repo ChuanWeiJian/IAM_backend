@@ -10,6 +10,7 @@ const Teacher = require("../models/teacher");
 const ExamCenterData = require("../models/exam-center-data");
 const AssignmentResult = require("../models/assignment-result");
 const InvigilatorExperience = require("../models/invigilator-exp");
+const school = require("../models/school");
 
 class AssignmentTaskController {
   constructor() {}
@@ -767,6 +768,120 @@ class AssignmentTaskController {
     }
 
     res.status(200).json({ message: "Success" });
+  };
+
+  getDashboardInfo = async (req, res, next) => {
+    let assignmentTasks,
+      data = {};
+    try {
+      //get all assignment tasks
+      assignmentTasks = await AssignmentTask.find({
+        district: req.district,
+      }).populate({ path: "examCenters", populate: { path: "school" } });
+
+      //update status
+      let bulkOperations = [];
+      assignmentTasks.forEach((task) => {
+        const newStatus = this.getStatus(task);
+        if (newStatus !== task.status) {
+          task.status = newStatus;
+          bulkOperations.push({
+            updateOne: {
+              filter: {
+                _id: task._id,
+              },
+              update: {
+                status: newStatus,
+              },
+            },
+          });
+        }
+      });
+
+      if (bulkOperations.length !== 0) {
+        await AssignmentTask.bulkWrite(bulkOperations);
+      }
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(
+          `Failed to retrieved dashboard information - ${error.message}`,
+          500
+        )
+      );
+    }
+
+    let tasksCompletedCount = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let tasksInCollectionCount = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let tasksCollectionIncompleteCount = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let tasksInAssigningCount = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let examCentersMap = new Map();
+    let examTypeMap = new Map();
+
+    let currentYear = new Date().getFullYear();
+
+    assignmentTasks.forEach((task) => {
+      //concluding the tasks by month of current year
+      if (task.createdDate.getFullYear() == currentYear) {
+        switch (task.status) {
+          case "Assignment Complete":
+            tasksCompletedCount[task.createdDate.getMonth()]++;
+            break;
+          case "Assigning in progress":
+            tasksInAssigningCount[task.createdDate.getMonth()]++;
+            break;
+          case "Collection in progress":
+            tasksInCollectionCount[task.createdDate.getMonth()]++;
+            break;
+          default:
+            tasksCollectionIncompleteCount[task.createdDate.getMonth()]++;
+            break;
+        }
+
+        //concluding the exam centers and schools
+        task.examCenters.forEach((center) => {
+          if (
+            examCentersMap.has(
+              `${center.school.schoolName} - ${center.examCenterCode}`
+            )
+          ) {
+            let temp = examCentersMap.get(
+              `${center.school.schoolName} - ${center.examCenterCode}`
+            );
+            examCentersMap.set(
+              `${center.school.schoolName} - ${center.examCenterCode}`,
+              ++temp
+            );
+          } else {
+            examCentersMap.set(
+              `${center.school.schoolName} - ${center.examCenterCode}`,
+              1
+            );
+          }
+        });
+
+        //concluding the exam type
+        if (examTypeMap.has(task.examType)) {
+          let temp = examTypeMap.get(task.examType);
+          examTypeMap.set(task.examType, ++temp);
+        } else {
+          examTypeMap.set(task.examType, 1);
+        }
+      }
+    });
+
+    data = {
+      complete: tasksCompletedCount,
+      assigning: tasksInAssigningCount,
+      collection: tasksInCollectionCount,
+      incomplete: tasksCollectionIncompleteCount,
+      examCenters: Object.fromEntries(examCentersMap),
+      examType: Object.fromEntries(examTypeMap),
+    };
+
+    res.status(200).json({
+      data: data,
+    });
   };
 }
 

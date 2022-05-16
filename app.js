@@ -47,9 +47,22 @@ app.use((error, req, res, next) => {
   res.json({ message: error.message || "An unknown error occurred!" });
 });
 
-mongoose
+/*mongoose
   .connect(
     `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.rlab7.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`,
+    { useNewUrlParser: true }
+  )
+  .then(() => {
+    //if database connection success
+    app.listen(5000);
+  })
+  .catch((err) => {
+    //database connection failed
+    console.log(err);
+  });*/
+mongoose
+  .connect(
+    `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.wq1qi.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`,
     { useNewUrlParser: true }
   )
   .then(() => {

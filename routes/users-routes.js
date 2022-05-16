@@ -49,4 +49,7 @@ router.patch(
 //delete account: /api/users/officer
 router.delete("/officer/:id", controller.deleteAccount);
 
+//get admin dashboard information: /api/users/dashboard
+router.get("/dashboard", controller.getDashboardInfo);
+
 module.exports = router;

@@ -71,4 +71,7 @@ router.patch(
 //delete assignment task: /api/assignments/:id
 router.delete("/:id", controller.deleteAssignmentTask);
 
+//get officer dashboard information: api/assignments/dashboard
+router.get("/dashboard/officer", controller.getDashboardInfo);
+
 module.exports = router;

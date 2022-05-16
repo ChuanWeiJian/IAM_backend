@@ -56,17 +56,15 @@ class UserController {
       );
     }
 
-    res
-      .status(200)
-      .json({
-        user: {
-          id: user.id,
-          login: user.login,
-          userGroup: user.userGroup,
-          district: user.district,
-        },
-        token: token,
-      });
+    res.status(200).json({
+      user: {
+        id: user.id,
+        login: user.login,
+        userGroup: user.userGroup,
+        district: user.district,
+      },
+      token: token,
+    });
   };
 
   signUpOfficerAccount = async (req, res, next) => {
@@ -258,6 +256,63 @@ class UserController {
     }
 
     res.status(200).json({ message: "success" });
+  };
+
+  getDashboardInfo = async (req, res, next) => {
+    let accounts, data = {};
+
+    try {
+      accounts = await User.find({ userGroup: "Officer" }).select(
+        "-password -login"
+      );
+    } catch (err) {
+      console.log(error);
+      return next(
+        new HttpError(
+          `Failed to get dashboard information - ${error.message}`,
+          500
+        )
+      );
+    }
+
+    let districtMap = new Map([
+      ["Batu Pahat", 0],
+      ["Johor Bahru", 0],
+      ["Kluang", 0],
+      ["Kota Tinggi", 0],
+      ["Kulai", 0],
+      ["Mersing", 0],
+      ["Muar", 0],
+      ["Pontian", 0],
+      ["Segamat", 0],
+      ["Tangkak", 0],
+    ]);
+    let statusMap = new Map([
+      ["active", 0],
+      ["inactive", 0],
+    ]);
+
+    accounts.forEach((account) => {
+      if (account.status == 1) {
+        let temp = statusMap.get("active");
+        statusMap.set("active", ++temp);
+      } else {
+        let temp = statusMap.get("inactive");
+        statusMap.set("inactive", ++temp);
+      }
+
+      let districtCount = districtMap.get(account.district);
+      districtMap.set(account.district, ++districtCount);
+    });
+
+    data = {
+      districts: Object.fromEntries(districtMap),
+      status: Object.fromEntries(statusMap),
+    };
+
+    res.status(200).json({
+      data: data,
+    });
   };
 }
 

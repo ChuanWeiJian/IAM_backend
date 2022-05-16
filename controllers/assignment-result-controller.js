@@ -143,10 +143,12 @@ class AssignmentResultController {
       session.startTransaction();
 
       //update assignment result
-      await assignmentResult.save();
+      await assignmentResult.save({ session: session });
 
       //update invigilator experiences
-      await InvigilatorExperience.bulkWrite(invigilatorExpBulkOperation);
+      await InvigilatorExperience.bulkWrite(invigilatorExpBulkOperation, {
+        session: session,
+      });
 
       await session.commitTransaction();
     } catch (error) {
@@ -201,6 +203,82 @@ class AssignmentResultController {
     res
       .status(200)
       .json({ profile: teacherProfile.toObject({ getters: true }) });
+  };
+
+  getDashboardInfo = async (req, res, next) => {
+    const userId = req.userId;
+
+    let teacherProfile, data;
+    try {
+      teacherProfile = await Teacher.findOne({ user: userId }).populate({
+        path: "listOfInvigilatorExperience",
+        populate: [
+          { path: "assignmentTask" },
+          { path: "assignedTo", populate: { path: "school" } },
+        ],
+      });
+    } catch (error) {
+      console.log(error);
+      return next(
+        new HttpError(
+          `Failed to retrieve dashboard information - ${error.message}`,
+          500
+        )
+      );
+    }
+
+    if (!teacherProfile) {
+      return next(
+        new HttpError(
+          "Could not find any teacher profile with the provided id",
+          404
+        )
+      );
+    }
+
+    let rolesMap = new Map([
+      ["Chief Invigilator", 0],
+      ["Vice Chief Invigilator", 0],
+      ["Room Keeper", 0],
+      ["Environmental Supervisor", 0],
+      ["Invigilator", 0],
+      ["Reserved Invigilator", 0],
+    ]);
+
+    let examCentersMap = new Map();
+
+    teacherProfile.listOfInvigilatorExperience.forEach((exp) => {
+      let role = _.startCase(exp.role);
+      let roleCount = rolesMap.get(role);
+
+      rolesMap.set(role, ++roleCount);
+
+      if (
+        examCentersMap.has(
+          `${exp.assignedTo.school.schoolName} - ${exp.assignedTo.examCenterCode}`
+        )
+      ) {
+        let temp = examCentersMap.get(
+          `${exp.assignedTo.school.schoolName} - ${exp.assignedTo.examCenterCode}`
+        );
+        examCentersMap.set(
+          `${exp.assignedTo.school.schoolName} - ${exp.assignedTo.examCenterCode}`,
+          ++temp
+        );
+      } else {
+        examCentersMap.set(
+          `${exp.assignedTo.school.schoolName} - ${exp.assignedTo.examCenterCode}`,
+          1
+        );
+      }
+    });
+
+    data = {
+      roles: Object.fromEntries(rolesMap),
+      examCenters: Object.fromEntries(examCentersMap),
+    };
+
+    res.status(200).json({ data: data });
   };
 }
 

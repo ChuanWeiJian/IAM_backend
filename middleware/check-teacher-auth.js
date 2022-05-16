@@ -15,6 +15,7 @@ module.exports = (req, res, next) => {
       throw new Error("Not Authorized");
     }
     req.district = decodedToken.district;
+    req.userId = decodedToken.userId;
 
     next();
   } catch (err) {
