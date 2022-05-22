@@ -332,7 +332,7 @@ class LetterTemplateController {
             text: "Please refer to the attachment: ",
             attachments: [
               {
-                path: `./letters/compiled/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
+                path: `../letters/compiled/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
               },
             ],
           };
