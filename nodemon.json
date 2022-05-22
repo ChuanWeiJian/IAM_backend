@@ -2,6 +2,12 @@
   "env": {
     "DB_USER": "bizbuzbiz",
     "DB_PASSWORD": "ivantehteh1",
-    "DB_NAME": "PEIA"
+    "DB_NAME": "PEIA",
+    "EMAIL": "chuanwj65@gmail.com",
+    "EMAIL_PASSWORD": "weijian@0511",
+    "REFRESH_TOKEN": "1//040Op1GW76jWwCgYIARAAGAQSNwF-L9IryMrtz-KMh1GJRiFjCMj0ZGIDxoHwGZQf5_vtmL_1sThpzLuzWpVT_wwq-2CDcobdyfY",
+    "CLIENT_SECRET": "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",
+    "CLIENT_ID": "63731112241-5oba2k11qspdakg3eclkjd851m836uk9.apps.googleusercontent.com",
+    "JWT_KEY": "fHugCkX#ZRjg94Vg$3WsBmBsVynGR?PU"
   }
 }
