@@ -307,7 +307,7 @@ class LetterTemplateController {
           //setting up options of pdf (format, name, path to store and margin)
           let options = {
             format: "A4",
-            path: `${process.env.HOME}/letters/compiled/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
+            path: `${process.env.HOME}/letters/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
             margin: { top: "10mm", left: "10mm", right: "10mm" },
           };
           //replace the content of basic template
@@ -332,7 +332,7 @@ class LetterTemplateController {
             text: "Please refer to the attachment: ",
             attachments: [
               {
-                path: `${process.env.HOME}/letters/compiled/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
+                path: `${process.env.HOME}/letters/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
               },
             ],
           };
