@@ -67,7 +67,7 @@ mongoose
   )
   .then(() => {
     //if database connection success
-    app.listen(5000);
+    app.listen(process.env.PORT || 5000);
   })
   .catch((err) => {
     //database connection failed
