@@ -301,13 +301,72 @@ class LetterTemplateController {
       //initialize transporter with pool connection - authentication with oAuth2
       const transporter = await createTransporter();
 
+      //
+      for (var idx = 0; idx < letterContents.length; idx++) {
+        const letter = letterContents[idx];
+
+        //setting up options of pdf (format, name, path to store and margin)
+        let options = {
+          format: "A4",
+          path: `${process.env.HOME}/letters/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
+          //path: `./letters/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
+          margin: { top: "10mm", left: "10mm", right: "10mm" },
+        };
+
+        //replace the content of basic template
+        const newLetterContent = _.replace(
+          style.letterBasicTemplate,
+          "letter-content",
+          letter.content
+        );
+
+        let file = {
+          content: newLetterContent,
+        };
+
+        //generate pdf and save in file
+        await pdfGenerator.generatePdf(file, options).then((output) => {
+
+          //generate email with attachment of the newly created pdf
+          let email = {
+            from: "chuanwj65@gmail.com",
+            to: "wei.jian@graduate.utm.my", //letter.invigilator.teacherEmailAddress
+            subject: letterTemplate.title,
+            text: "Please refer to the attachment: ",
+            attachments: [
+              {
+                path: `${process.env.HOME}/letters/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
+                //path: `./letters/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
+              },
+            ],
+          };
+
+          transporter.sendMail(email, (error, info) => {
+            if (error) {
+              return next(
+                new HttpError(`Failed to send letter - ${error}`, 500)
+              );
+            } else {
+              //delete the attachment after sent email synchronous
+              fs.unlink(email.attachments[0].path, (err) => {
+                if (err) {
+                  console.log(err);
+                }
+              });
+            }
+          });
+        });
+      }
+
+      /*
       //generate pdf and emails
       let emails = await Promise.all(
         letterContents.map(async (letter) => {
           //setting up options of pdf (format, name, path to store and margin)
           let options = {
             format: "A4",
-            path: `${process.env.HOME}/letters/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
+            //path: `${process.env.HOME}/letters/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
+            path: `./letters/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
             margin: { top: "10mm", left: "10mm", right: "10mm" },
           };
           //replace the content of basic template
@@ -332,7 +391,8 @@ class LetterTemplateController {
             text: "Please refer to the attachment: ",
             attachments: [
               {
-                path: `${process.env.HOME}/letters/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
+                //path: `${process.env.HOME}/letters/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
+                path: `./letters/${letterTemplate.title}_${letter.invigilator.teacherName}.pdf`,
               },
             ],
           };
@@ -361,7 +421,7 @@ class LetterTemplateController {
             }
           });
         }
-      }
+      }*/
     } catch (error) {
       console.log(error);
       return next(
