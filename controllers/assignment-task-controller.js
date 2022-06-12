@@ -245,6 +245,8 @@ class AssignmentTaskController {
     let invigilatorExp = [];
     let invigilatorPool = [];
     let results = [];
+    let counter = 0;
+
     try {
       assignmentTask = await AssignmentTask.findById(taskId)
         .populate({
@@ -296,19 +298,28 @@ class AssignmentTaskController {
             data.examCenter.school.toString()
         );
 
-        console.log("One Loop");
-        listOfPossibleInvigilator.forEach((invigilator) => {
-          console.log(invigilator.user.school);
-        })
+        if (listOfPossibleInvigilator.length < data[numberAccessKey]) {
+          const difference = data[numberAccessKey] - listOfPossibleInvigilator.length;
 
+          for(var count = 1; count <= difference; count++){
+            let lastAccessIndex = 0;
+            for(idx = lastAccessIndex; idx < invigilatorPool.length; idx++){
+              if(listOfPossibleInvigilator.includes(invigilatorPool[idx])){
+                continue;
+              }
+              else{
+                listOfPossibleInvigilator.push(invigilatorPool[idx]);
+                lastAccessIndex = idx;
+              }
+            }
+          }
+        }
 
         //loop through the number of required invigilator requested by the exam center
         for (var idx = 1; idx <= data[numberAccessKey]; idx++) {
-          
           //randomly select an invigilator
           const randomIndex = _.random(0, listOfPossibleInvigilator.length - 1);
 
-          
           const selectedInvigilator = listOfPossibleInvigilator[randomIndex];
 
           //insert the selected invigilator into the array
@@ -344,11 +355,11 @@ class AssignmentTaskController {
             invigilatorPool,
             (invigilator) => invigilator.id == selectedInvigilator.id
           );
-
         }
 
         //push the result for the current exam center into results array
         results.push(newResult);
+        counter++;
       });
 
       const assignmentResult = new AssignmentResult({
