@@ -338,6 +338,8 @@ class AssignmentTaskController {
             invigilatorPool,
             (invigilator) => invigilator.id == selectedInvigilator.id
           );
+
+          console.log(invigilatorPool.length);
         }
 
         //push the result for the current exam center into results array
