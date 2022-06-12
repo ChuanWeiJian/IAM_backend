@@ -298,6 +298,7 @@ class AssignmentTaskController {
 
         //loop through the number of required invigilator requested by the exam center
         for (var idx = 1; idx <= data[numberAccessKey]; idx++) {
+          console.log(listOfPossibleInvigilator.length);
           //randomly select an invigilator
           const randomIndex = _.random(0, listOfPossibleInvigilator.length - 1);
 
