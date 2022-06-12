@@ -302,6 +302,7 @@ class AssignmentTaskController {
           //randomly select an invigilator
           const randomIndex = _.random(0, listOfPossibleInvigilator.length - 1);
 
+          console.log(randomIndex);
           const selectedInvigilator = listOfPossibleInvigilator[randomIndex];
 
           //insert the selected invigilator into the array
