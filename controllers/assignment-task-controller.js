@@ -296,13 +296,15 @@ class AssignmentTaskController {
             data.examCenter.school.toString()
         );
 
+        console.log(listOfPossibleInvigilator);
+
         //loop through the number of required invigilator requested by the exam center
         for (var idx = 1; idx <= data[numberAccessKey]; idx++) {
-          console.log(listOfPossibleInvigilator.length);
+          
           //randomly select an invigilator
           const randomIndex = _.random(0, listOfPossibleInvigilator.length - 1);
 
-          console.log(randomIndex);
+          
           const selectedInvigilator = listOfPossibleInvigilator[randomIndex];
 
           //insert the selected invigilator into the array
@@ -339,7 +341,7 @@ class AssignmentTaskController {
             (invigilator) => invigilator.id == selectedInvigilator.id
           );
 
-          console.log(invigilatorPool.length);
+          console.log(invigilatorPool);
         }
 
         //push the result for the current exam center into results array
