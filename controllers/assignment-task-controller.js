@@ -296,7 +296,9 @@ class AssignmentTaskController {
             data.examCenter.school.toString()
         );
 
-        console.log(listOfPossibleInvigilator);
+        listOfPossibleInvigilator.forEach((invigilator) => {
+          console.log(invigilator.user.school);
+        })
 
         //loop through the number of required invigilator requested by the exam center
         for (var idx = 1; idx <= data[numberAccessKey]; idx++) {
@@ -341,7 +343,9 @@ class AssignmentTaskController {
             (invigilator) => invigilator.id == selectedInvigilator.id
           );
 
-          console.log(invigilatorPool);
+          invigilatorPool.forEach((invigilator) => {
+            console.log(invigilator.user.school);
+          })
         }
 
         //push the result for the current exam center into results array
